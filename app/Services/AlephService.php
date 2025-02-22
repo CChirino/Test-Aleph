@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Contracts\AlephServiceInterface;
+use App\Exceptions\AlephApiException;
 use App\Models\Cmdb;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class AlephService implements AlephServiceInterface
 {
@@ -23,14 +25,22 @@ class AlephService implements AlephServiceInterface
     public function getCategories(): array
     {
         try {
-            $response = $this->makeApiCall(self::API_ENDPOINTS['categories']);
-            return $response['categorias'] ?? [];
+            return Cache::remember('aleph_categories', now()->addHours(1), function () {
+                $response = $this->makeApiCall(self::API_ENDPOINTS['categories']);
+                return $response['categorias'] ?? [];
+            });
+        } catch (AlephApiException $e) {
+            Log::error('Error en API de Aleph al obtener categorías', [
+                'code' => $e->getApiErrorCode(),
+                'message' => $e->getMessage()
+            ]);
+            return Cache::get('aleph_categories', []);
         } catch (\Exception $e) {
-            Log::error('Error fetching categories from Aleph API', [
+            Log::error('Error inesperado al obtener categorías', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            return [];
+            return Cache::get('aleph_categories', []);
         }
     }
 
@@ -72,11 +82,18 @@ class AlephService implements AlephServiceInterface
             }
 
             return $records;
+        } catch (AlephApiException $e) {
+            Log::error('Error en API de Aleph al obtener registros CMDB', [
+                'code' => $e->getApiErrorCode(),
+                'message' => $e->getMessage(),
+                'category_id' => $categoryId
+            ]);
+            return [];
         } catch (\Exception $e) {
-            Log::error('Error fetching CMDB records from Aleph API', [
-                'category_id' => $categoryId,
+            Log::error('Error inesperado al obtener registros CMDB', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'category_id' => $categoryId
             ]);
             return [];
         }
@@ -104,13 +121,36 @@ class AlephService implements AlephServiceInterface
 
     private function makeApiCall(string $endpoint, array $params = []): array
     {
-        $params['api_key'] = $this->getApiKey();
-        
-        $response = Http::asForm()
-            ->post($this->getBaseUrl() . $endpoint, $params)
-            ->throw();
+        try {
+            $params['api_key'] = $this->getApiKey();
+            
+            $response = Http::asForm()
+                ->post($this->getBaseUrl() . $endpoint, $params);
 
-        return $response->json() ?? [];
+            if ($response->status() === 401) {
+                throw AlephApiException::unauthorized();
+            }
+
+            if ($response->status() === 403) {
+                throw AlephApiException::apiKeyNotFound();
+            }
+
+            if ($response->status() === 500) {
+                throw AlephApiException::internalServerError();
+            }
+
+            if (!$response->successful()) {
+                throw AlephApiException::unexpectedError(
+                    "Error HTTP: " . $response->status() . " - " . $response->body()
+                );
+            }
+
+            return $response->json() ?? [];
+        } catch (AlephApiException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw AlephApiException::unexpectedError($e->getMessage());
+        }
     }
 
     private function getBaseUrl(): string

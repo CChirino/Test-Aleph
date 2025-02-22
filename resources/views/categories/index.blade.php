@@ -52,6 +52,9 @@
                 </div>
             </div>
         </div>
+        <div class="mt-4">
+            {{ $categories->links() }}
+        </div>
     @else
         <div class="alert alert-info">
             No hay categorías disponibles.
