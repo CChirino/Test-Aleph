@@ -2,6 +2,11 @@
 
 Aplicación Laravel para la integración con el API de Aleph Manager, permitiendo la gestión y sincronización de registros CMDB.
 
+## Demo en Vivo
+
+El sistema está desplegado y puede ser accedido en:
+[https://test-aleph-production.up.railway.app/categories](https://test-aleph-production.up.railway.app/categories)
+
 ## Requisitos Previos
 
 ### Instalación Tradicional
@@ -306,3 +311,5 @@ composer update
 ## Soporte
 
 Para reportar problemas o solicitar ayuda, por favor crear un issue en el repositorio.
+
+
