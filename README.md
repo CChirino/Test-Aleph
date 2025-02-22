@@ -1,66 +1,197 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Aleph CMDB Integration
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplicación Laravel para la integración con el API de Aleph Manager, permitiendo la gestión y sincronización de registros CMDB.
 
-## About Laravel
+## Requisitos Previos
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.1 o superior
+- Composer
+- MySQL 5.7 o superior
+- Node.js y NPM (para los assets)
+- Git
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Instalación
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Clonar el repositorio:
+```bash
+git clone <repository-url>
+cd test-aleph
+```
 
-## Learning Laravel
+2. Instalar dependencias de PHP:
+```bash
+composer install
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+3. Copiar el archivo de configuración:
+```bash
+cp .env.example .env
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+4. Configurar el archivo .env:
+```env
+APP_NAME="Aleph CMDB"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=aleph_cmdb
+DB_USERNAME=root
+DB_PASSWORD=
 
-## Laravel Sponsors
+# Configuración de Aleph
+ALEPH_BASE_URL=https://qa.alephmanager.com
+ALEPH_API_KEY=tu_api_key_aqui
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+5. Generar la clave de la aplicación:
+```bash
+php artisan key:generate
+```
 
-### Premium Partners
+6. Crear la base de datos:
+```sql
+CREATE DATABASE aleph_cmdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+7. Ejecutar las migraciones:
+```bash
+php artisan migrate
+```
 
-## Contributing
+8. Crear el enlace simbólico para el almacenamiento:
+```bash
+php artisan storage:link
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+9. Configurar permisos de carpetas:
+```bash
+chmod -R 775 storage bootstrap/cache
+chown -R $USER:www-data storage bootstrap/cache
+```
 
-## Code of Conduct
+## Configuración
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### API de Aleph
 
-## Security Vulnerabilities
+1. Obtener las credenciales de API de Aleph Manager
+2. Configurar las credenciales en el archivo .env:
+```env
+ALEPH_BASE_URL=https://qa.alephmanager.com
+ALEPH_API_KEY=tu_api_key_aqui
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Configuración de Importación/Exportación
 
-## License
+Los siguientes valores pueden ser configurados en `config/aleph.php`:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```php
+return [
+    'base_url' => env('ALEPH_BASE_URL'),
+    'api_key' => env('ALEPH_API_KEY'),
+    
+    'exports' => [
+        'directory' => 'reports',
+        'disk' => 'public',
+    ],
+    
+    'imports' => [
+        'allowed_extensions' => ['xlsx', 'xls'],
+        'max_file_size' => 5120, // 5MB
+    ],
+];
+```
+
+## Uso
+
+### Iniciar el servidor de desarrollo
+
+```bash
+php artisan serve
+```
+
+La aplicación estará disponible en `http://localhost:5000`
+
+### Funcionalidades Principales
+
+1. **Listado de Categorías**
+   - Acceder a la página principal para ver todas las categorías disponibles
+   - Hacer clic en una categoría para ver sus registros CMDB
+
+2. **Gestión de Registros CMDB**
+   - Ver registros por categoría
+   - Exportar registros a Excel
+   - Importar registros desde Excel
+
+### Formato de Archivo de Importación
+
+El archivo Excel debe contener las siguientes columnas obligatorias:
+- `Nombre`
+- `Identificador`
+
+Columnas adicionales serán tratadas como campos personalizados.
+
+## Estructura de Base de Datos
+
+La tabla principal `cmdb` tiene la siguiente estructura:
+
+```sql
+CREATE TABLE cmdb (
+    id bigint unsigned NOT NULL AUTO_INCREMENT,
+    categoria_id varchar(255) NOT NULL,
+    identificador varchar(255) NOT NULL,
+    nombre varchar(255) NOT NULL,
+    campos_adicionales json DEFAULT NULL,
+    created_at timestamp NULL DEFAULT NULL,
+    updated_at timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (id)
+);
+```
+
+## Solución de Problemas
+
+### Errores Comunes
+
+1. **Error de Permisos**
+   ```bash
+   chmod -R 775 storage bootstrap/cache
+   chown -R $USER:www-data storage bootstrap/cache
+   ```
+
+2. **Error de Conexión a la API**
+   - Verificar que ALEPH_BASE_URL y ALEPH_API_KEY estén correctamente configurados
+   - Confirmar que la API sea accesible desde el servidor
+
+3. **Errores de Importación**
+   - Verificar que el archivo Excel tenga las columnas requeridas
+   - Comprobar que el archivo no exceda el tamaño máximo permitido
+
+## Mantenimiento
+
+### Limpiar Caché
+
+```bash
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+```
+
+### Actualizar Dependencias
+
+```bash
+composer update
+```
+
+## Seguridad
+
+- Las credenciales de API se almacenan en el archivo .env
+- Los archivos exportados se guardan en storage/app/public/reports
+- Se implementa validación de archivos durante la importación
+- Se sanitizan los nombres de archivo para exportación
+
+## Soporte
+
+Para reportar problemas o solicitar ayuda, por favor crear un issue en el repositorio.
